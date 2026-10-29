@@ -28,7 +28,7 @@ final class HotKeys {
         let hkID = EventHotKeyID(signature: OSType(0x504D5345), id: id) // 'PMSE'
         let status = RegisterEventHotKey(UInt32(keyCode), UInt32(modifiers), hkID, GetEventDispatcherTarget(), 0, &ref)
         guard status == noErr, let ref else {
-            NSLog("PodMouse: hotkey \(display) 등록 실패 (\(status)) - 다른 앱이 쓰는 중일 수 있음")
+            NSLog("AirpodMouse: hotkey \(display) 등록 실패 (\(status)) - 다른 앱이 쓰는 중일 수 있음")
             return
         }
         let b = Binding(keyCode: UInt32(keyCode), modifiers: UInt32(modifiers), display: display, title: title,

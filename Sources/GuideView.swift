@@ -43,19 +43,19 @@ private struct StartView: View {
     private var steps: [Step] {
         let a = { settings.action(for: $0).label }
         return [
-            Step(id: 1, title: L("손쉬운 사용 권한 허용", "Allow Accessibility access"), how: L("커서를 움직이고 클릭하려면 필요해요. 시스템 설정에서 PodMouse를 켜주세요.", "Needed to move the cursor and click. Turn on PodMouse in System Settings."),
+            Step(id: 1, title: L("손쉬운 사용 권한 허용", "Allow Accessibility access"), how: L("커서를 움직이고 클릭하려면 필요해요. 시스템 설정에서 AirpodMouse를 켜주세요.", "Needed to move the cursor and click. Turn on AirpodMouse in System Settings."),
                  done: state.accessibilityOK,
                  button: state.accessibilityOK ? nil : (L("설정 열기", "Open Settings"), {
                      controller.checkAccessibility(prompt: true)
                      NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
                  })),
-            Step(id: 2, title: L("에어팟 귀에 착용", "Put your AirPods in"), how: L("양쪽 다 끼면 헤드 트래킹이 시작돼요. 처음엔 '동작 및 피트니스' 권한을 물어봐요.", "Head tracking starts once both are in your ears. The first time, macOS asks for Motion & Fitness access."),
+            Step(id: 2, title: L("에어팟 귀에 착용", "Put your AirPods in"), how: L("이 Mac에 연결된 채로 끼면 헤드 트래킹이 시작돼요. 처음엔 '동작 및 피트니스' 권한을 물어봐요.", "Head tracking starts once they're in your ears and connected to this Mac. The first time, macOS asks for Motion & Fitness access."),
                  done: t.receiving),
-            Step(id: 3, title: L("마우스 모드 켜기", "Turn on mouse mode"), how: L("⌃⌥M 을 누르거나, 고개를 좌우로 빠르게 도리도리 하세요. 다시 하면 꺼져요.", "Press ⌃⌥M or quickly shake your head side to side. Do it again to turn it off."),
+            Step(id: 3, title: L("마우스 모드 켜기", "Turn on mouse mode"), how: L("⌃⌥M 을 누르세요. 다시 누르면 꺼져요.", "Press ⌃⌥M. Press it again to turn it off."),
                  done: state.mouseEnabled,
                  button: state.mouseEnabled ? nil : (L("지금 켜기", "Turn On"), { controller.setMouse(true) })),
-            Step(id: 4, title: L("고개를 살짝 돌리고 있기 → 그쪽으로 커서 이동", "Keep your head slightly turned → the cursor moves that way"),
-                 how: L("노트북 정면을 보고 ⌃⌥R 로 커서를 정중앙에 두세요. 정면에서 고개를 조금 돌리거나 숙이고 있으면 그쪽으로 계속 가고, 정면으로 돌아오면 멈춰요. 멈춤 위치가 어긋나면 ⌃⌥ / 한 번.", "Face your laptop and press ⌃⌥R to center the cursor. Keep your head turned or tilted a little and the cursor keeps moving that way; face forward again to stop. If the rest position drifts, press ⌃⌥ / once."),
+            Step(id: 4, title: L("고개를 돌리기 → 커서 이동", "Turn your head → the cursor moves"),
+                 how: L("트랙패드처럼 움직인 만큼 가요. 천천히 = 정밀하게, 빠르게 = 멀리. 고개를 멈추면 커서도 멈춰요. 어긋나면 정면을 보고 ⌃⌥R.", "Like a trackpad, it moves as much as you move. Slow = precise, fast = far. Stop your head and the cursor stops. If it's off, face forward and press ⌃⌥R."),
                  done: t.cursorMovedByHead),
             Step(id: 5, title: L("⌃⌥ , (쉼표) → 왼쪽 클릭", "⌃⌥ , (comma) → left click"), how: L("아래 연습 영역에 커서를 두고 Control+Option+쉼표. 꾹 누른 채 고개를 움직이면 드래그돼요. 빠르게 두 번 = 더블클릭.", "Put the cursor over the practice area below and press Control+Option+Comma. Hold it and move your head to drag. Press twice quickly to double-click."),
                  done: state.practiced.contains("hotkeyLeft")),
@@ -64,8 +64,10 @@ private struct StartView: View {
             Step(id: 7, title: L("에어팟 기둥 1번 → \(a(.stemSingle)),  2번 → \(a(.stemDouble))", "AirPods stem ×1 → \(a(.stemSingle)),  ×2 → \(a(.stemDouble))"),
                  how: L("마우스 모드가 켜져 있을 때만 동작해요 (꺼지면 음악 재생/정지로 돌아가요). 양쪽 어느 에어팟을 눌러도 같아요.", "Only works while mouse mode is on (otherwise it's play/pause again). Either AirPod works the same."),
                  done: state.practiced.contains(PodTrigger.stemSingle.rawValue) || state.practiced.contains(PodTrigger.stemDouble.rawValue)),
-            Step(id: 8, title: L("⌃⌥V 또는 기둥 3번 → 음성 입력", "⌃⌥V or stem ×3 → voice input"), how: L("말하고 나서 한 번 더 누르면 지금 창에 입력돼요. ⌃⌥V 를 꾹 누르고 말하면 손을 떼는 순간 입력돼요.", "Speak, then press again to type it into the current window. Or hold ⌃⌥V while you speak — it's typed the moment you let go."),
-                 done: state.voiceUsed),
+            Step(id: 8, title: L("⌃⌥W 또는 기둥 3번 → 머무르면 클릭", "⌃⌥W or stem ×3 → dwell click"),
+                 how: L("켠 뒤 연습 영역 위에서 커서를 멈추면 링이 차오르고 클릭돼요. 손을 쓰지 않을 때 좋아요. 같은 방법으로 끄세요.", "Turn it on, then hold the cursor still over the practice area: a ring fills up and it clicks. Great when your hands are busy. Turn it off the same way."),
+                 done: state.practiced.contains("dwell"),
+                 button: settings.dwellEnabled ? nil : (L("켜기", "Turn On"), { controller.setDwell(true) })),
         ]
     }
 
@@ -87,8 +89,8 @@ private struct StartView: View {
                 .font(.system(size: 40))
                 .foregroundStyle(.tint)
             VStack(alignment: .leading, spacing: 4) {
-                Text("PodMouse").font(.largeTitle.bold())
-                Text(L("에어팟을 낀 채로 고개로 커서를 움직이고, 동작으로 클릭하고, 말로 코딩해요.", "Move the cursor with your head, click with gestures, and code with your voice — just by wearing your AirPods."))
+                Text("AirpodMouse").font(.largeTitle.bold())
+                Text(L("에어팟을 낀 채로 고개로 커서를 움직이고, 단축키·기둥 누르기·머무르기로 클릭해요.", "Move the cursor with your head and click with shortcuts, stem presses, or by holding still — just by wearing your AirPods."))
                     .foregroundStyle(.secondary)
             }
             Spacer()
@@ -178,7 +180,6 @@ private struct PracticePad: View {
                     Button(L("기록 지우기", "Reset")) {
                         m.left = 0; m.right = 0; m.double = 0
                         state.practiced.removeAll()
-                        state.voiceUsed = false
                         t.cursorMovedByHead = false
                     }
                     .controlSize(.small)
@@ -204,13 +205,13 @@ private struct PracticePad: View {
                             counter(L("오른쪽", "Right"), m.right)
                             counter(L("더블", "Double"), m.double)
                         }
-                        Text(L("마지막 입력: \(state.lastTrigger?.label ?? "-")", "Last input: \(state.lastTrigger?.label ?? "-")"))
+                        Text(L("마지막 입력: \(state.lastInput ?? "-")", "Last input: \(state.lastInput ?? "-")"))
                             .font(.callout).foregroundStyle(.secondary)
                     }
                     .allowsHitTesting(false)
                 }
                 .frame(height: 190)
-                Text(L("에어팟 기둥을 1번 / 2번 눌러서도 해보세요 (마우스 모드가 켜져 있어야 해요).", "Try pressing an AirPods stem once or twice too (mouse mode must be on)."))
+                Text(L("에어팟 기둥을 1번 / 2번 누르거나, 머무르면 클릭을 켜고 커서를 멈춰서도 해보세요 (마우스 모드가 켜져 있어야 해요).", "Also try pressing an AirPods stem once or twice, or turn on dwell click and hold the cursor still (mouse mode must be on)."))
                     .font(.caption).foregroundStyle(.secondary)
             }
             .padding(6)
@@ -260,13 +261,6 @@ private struct ControlsView: View {
     let controller: AppController
     @ObservedObject var settings = Settings.shared
 
-    private var gestureInfo: [(PodTrigger, String, String)] { [
-        (.nod, "arrow.down.circle", L("고개를 빠르게 끄덕였다가 원래대로. 두 번 연속 = 더블클릭.", "Nod quickly and come back. Twice in a row = double-click.")),
-        (.tiltRight, "arrow.turn.right.down", L("오른쪽 귀를 어깨 쪽으로 기울였다가 1.5초 안에 원위치.", "Tilt your right ear toward your shoulder and come back within 1.5 s.")),
-        (.tiltLeft, "arrow.turn.left.down", L("왼쪽 귀를 어깨 쪽으로 기울였다가 원위치.", "Tilt your left ear toward your shoulder and come back.")),
-        (.shake, "arrow.left.and.right", L("고개를 좌우로 빠르게 2~3번 (도리도리).", "Shake your head quickly side to side 2–3 times.")),
-    ] }
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -287,44 +281,21 @@ private struct ControlsView: View {
                         Toggle(L("사용", "Enabled"), isOn: Binding(get: { settings.captureStem }, set: { controller.setStemCapture($0) }))
                             .toggleStyle(.switch)
                     }
+                    infoRow("smallcircle.filled.circle", L("머무르면 클릭 (⌃⌥W)", "Dwell click (⌃⌥W)"),
+                            String(format: L("커서를 %.0fpx 안에 %.1f초 두면 왼쪽 클릭. 링이 차오르는 동안 움직이면 취소돼요. 손을 전혀 안 쓸 땐 기둥 3번으로 켜고 끄세요.", "Keep the cursor within %.0f px for %.1f s to left-click. Move while the ring fills to cancel. Fully hands-free? Toggle it with stem ×3."), settings.dwellRadius, settings.dwellTime))
                 }
 
                 section(L("커서 이동", "Moving the Cursor")) {
-                    infoRow("move.3d", L("고개를 살짝 돌리고 있기 (조이스틱)", "Keep your head slightly turned (joystick)"),
-                            L("정면이 멈춤이에요. 살짝 벗어나 있으면 천천히, 많이 벗어나면 빠르게 계속 이동하고, 정면으로 돌아오면 멈춰요. 4° 이내는 움직이지 않아요.", "Facing forward means stop. Turn a little to move slowly, more to move faster; face forward again to stop. Nothing moves within 4°."))
-                    infoRow("keyboard", L("⌃⌥ /  →  지금 고개 위치를 멈춤으로", "⌃⌥ /  →  Make the current head position the rest point"),
-                            L("자세를 바꿔서 정면이 어긋났을 때 한 번 누르세요. 설정에서 '누르고 있을 때만 이동'을 켜면 키를 누르는 동안만 움직여요.", "Press it once after changing posture. Turn on 'Move only while holding' in Settings to move only while the key is held."))
-                    infoRow("scope", L("⌃⌥R  →  정면 기준 + 커서 정중앙", "⌃⌥R  →  Reset forward + center the cursor"),
-                            L("노트북 정면을 보고 누르세요. 마우스 모드를 켤 때도 커서가 정중앙에서 시작해요.", "Face your laptop and press it. Turning on mouse mode also starts the cursor at the center."))
-                    infoRow("move.3d", L("다른 이동 방식", "Other movement modes"),
-                            settings.joystickMode
-                                ? L("설정 탭 → 커서에서 '키 없이 항상 조이스틱', 절대 모드, 상대 모드로 바꿀 수 있어요.", "In Settings → Cursor you can switch to hold-key joystick, absolute, or relative mode.")
-                                : settings.absoluteMode
-                                ? L("절대 모드: 정면 = 화면 중앙, 고개 방향이 곧 커서 위치예요. 끝을 넘어 더 돌리면 기준이 따라와요. 어긋나면 정면을 보고 ⌃⌥R.", "Absolute mode: forward = screen center, and where your head points is where the cursor goes. Turning past the edge drags the reference along. If it drifts, face forward and press ⌃⌥R.")
-                                : L("상대 모드: 움직인 만큼 이동해요. 천천히 = 정밀하게, 빠르게 = 멀리. 어긋나면 ⌃⌥R.", "Relative mode: the cursor moves as much as you move. Slow = precise, fast = far. If it drifts, press ⌃⌥R."))
-                    infoRow("dial.medium", L("고개를 너무 많이 움직여야 할 때", "If you have to move your head too much"),
-                            L("설정 탭 → 커서에서 절대 모드의 위아래/좌우 범위를 줄이세요. 작을수록 조금만 움직여도 끝까지 가요.", "In Settings → Cursor, lower the absolute mode's horizontal/vertical range. Smaller values reach the edge with less movement."))
+                    infoRow("move.3d", L("고개 돌리기 / 들기 · 숙이기", "Turn / raise / lower your head"),
+                            L("트랙패드처럼 움직인 만큼 이동해요. 천천히 = 정밀하게, 빠르게 = 멀리. 고개를 멈추면 커서가 그 자리에 고정돼서 떨리지 않아요.", "Like a trackpad, the cursor moves as much as you move. Slow = precise, fast = far. Stop and the cursor locks in place so it doesn't shake."))
+                    infoRow("scope", L("⌃⌥R  →  기준 재설정 + 커서 정중앙", "⌃⌥R  →  Reset + center the cursor"),
+                            L("커서가 엉뚱한 곳에 있을 때 정면을 보고 누르세요. 마우스 모드를 켤 때도 커서가 정중앙에서 시작해요.", "Face forward and press it when the cursor is somewhere odd. Turning on mouse mode also starts the cursor at the center."))
+                    infoRow("dial.medium", L("⌃⌥= / ⌃⌥-  →  감도 올리기 / 내리기", "⌃⌥= / ⌃⌥-  →  More / less sensitive"),
+                            L("고개를 너무 많이 움직여야 하면 올리고, 너무 휙휙 가면 내리세요. 나머지는 설정 탭에서.", "Raise it if you have to move your head too much; lower it if the cursor flies around. More in the Settings tab."))
                     infoRow("arrow.up.and.down", L("스크롤 모드 (⌃⌥S)", "Scroll mode (⌃⌥S)"),
                             L("켜면 고개 위아래가 스크롤이 돼요. 긴 코드나 문서 읽을 때 좋아요.", "Moving your head up/down scrolls. Great for reading long code or documents."))
                     infoRow("hand.draw", L("드래그 고정 (⌃⌥D)", "Drag lock (⌃⌥D)"),
-                            L("키를 계속 누르고 있기 힘들 때. 한 번 누르면 버튼이 눌린 상태가 되고, 고개로 옮긴 뒤 다시 ⌃⌥D 나 ⌃⌥ , 로 놓아요.", "For when holding a key is tiring. Press once to hold the button down, move with your head, then press ⌃⌥D or ⌃⌥ , to release."))
-                }
-
-                section(L("음성으로 코딩하기 (Claude Code · Codex)", "Coding by Voice (Claude Code · Codex)")) {
-                    infoRow("1.circle", L("터미널에서 claude 또는 codex 실행", "Run claude or codex in Terminal"), nil)
-                    infoRow("2.circle", L("⌃⌥V (또는 기둥 3번) → 말하기", "⌃⌥V (or stem ×3) → speak"), L("화면 아래에 듣고 있는 내용이 실시간으로 보여요. ⌃⌥V 를 꾹 누르고 말하면 손을 떼는 순간 입력돼요.", "What you say shows up live at the bottom of the screen. Hold ⌃⌥V while speaking and it's typed when you let go."))
-                    infoRow("3.circle", L("다시 ⌃⌥V (또는 기둥 3번) → 창에 입력됨", "⌃⌥V (or stem ×3) again → typed into the window"),
-                            settings.autoEnter ? L("Enter 자동이 켜져 있어서 바로 전송돼요.", "Auto Enter is on, so it's sent right away.") : L("Enter 자동이 꺼져 있어요. 확인 후 \"엔터\" 라고 말하거나 Enter 를 눌러 전송하세요.", "Auto Enter is off. Check the text, then say \"enter\" or press Enter to send."))
-                    infoRow("text.bubble", L("음성 명령", "Voice commands"), L("\"엔터\" / \"전송\" → Enter,  \"취소\" → Esc", "\"enter\" / \"send\" → Enter,  \"cancel\" → Esc"))
-                    infoRow("mic", L("마이크 선택", "Choosing a microphone"), L("macOS 기본 입력 장치를 써요. 제어 센터 → 사운드에서 입력을 에어팟으로 고르세요.", "PodMouse uses the macOS default input. Pick your AirPods as the input in Control Center → Sound."))
-                }
-
-                section(L("머리 제스처 (선택)", "Head Gestures (optional)")) {
-                    ForEach(gestureInfo, id: \.0) { trig, icon, how in
-                        infoRow(icon, "\(trig.label)  →  \(settings.action(for: trig).label)", how)
-                    }
-                    Text(L("고개로 클릭하는 건 기본으로 꺼져 있어요. 원하면 설정 탭에서 동작을 연결하세요. 제스처 전체는 ⌃⌥G 로 켜고 끌 수 있어요.", "Clicking by head gesture is off by default. Assign actions in the Settings tab if you want them. Turn all gestures on/off with ⌃⌥G."))
-                        .font(.caption).foregroundStyle(.secondary)
+                            L("키를 계속 누르고 있기 힘들 때. 한 번 누르면 버튼이 눌린 상태가 되고, 고개로 옮긴 뒤 다시 ⌃⌥D 나 ⌃⌥ , 로 놓아요. 머무르면 클릭이 켜져 있으면 멈추는 것만으로 놓여요.", "For when holding a key is tiring. Press once to hold the button down, move with your head, then press ⌃⌥D or ⌃⌥ , to release. With dwell click on, just holding still drops it."))
                 }
 
                 section(L("단축키  (⌃ Control + ⌥ Option)", "Shortcuts  (⌃ Control + ⌥ Option)")) {
@@ -341,9 +312,9 @@ private struct ControlsView: View {
                 }
 
                 section(L("문제가 생기면", "Troubleshooting")) {
-                    infoRow("exclamationmark.triangle", L("제스처가 멋대로 실행돼요", "Gestures trigger by accident"), L("⌃⌥G 로 제스처를 끄고 단축키만 쓰거나, 설정 탭에서 인식 기준을 높이세요.", "Turn gestures off with ⌃⌥G and use shortcuts only, or raise the thresholds in the Settings tab."))
-                    infoRow("arrow.triangle.2.circlepath", L("커서가 계속 한쪽으로 흘러요", "The cursor keeps drifting"), L("⌃⌥R 로 재설정하고, 설정 탭에서 데드존을 올리세요.", "Reset with ⌃⌥R and raise the dead zone in the Settings tab."))
-                    infoRow("arrow.left.arrow.right", L("방향이 반대예요", "Directions are reversed"), L("설정 탭 → 좌우/위아래 반전, 갸웃 좌우 반전.", "Settings tab → Invert horizontal/vertical, Invert tilt."))
+                    infoRow("exclamationmark.triangle", L("머무르면 클릭이 멋대로 눌려요", "Dwell click fires by accident"), L("⌃⌥W 나 기둥 3번으로 끄거나, 설정 탭에서 머무는 시간을 늘리세요.", "Turn it off with ⌃⌥W or stem ×3, or make the dwell time longer in the Settings tab."))
+                    infoRow("arrow.triangle.2.circlepath", L("커서가 계속 한쪽으로 흘러요", "The cursor keeps drifting"), L("설정 탭에서 멈춤 기준을 올리세요. 실시간 센서의 '걸러진 속도'를 참고하세요.", "Raise the stillness threshold in the Settings tab. Use 'Filtered speed' under Live Sensors as a guide."))
+                    infoRow("arrow.left.arrow.right", L("방향이 반대예요", "Directions are reversed"), L("설정 탭 → 좌우/위아래 반전.", "Settings tab → Invert horizontal/vertical."))
                     infoRow("cursorarrow.slash", L("커서가 아예 안 움직여요", "The cursor doesn't move at all"), L("시작하기 탭의 체크리스트 1~3번을 확인하세요.", "Check steps 1–3 in the Get Started tab."))
                 }
             }

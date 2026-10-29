@@ -1,10 +1,10 @@
 import Foundation
 
-/// 문제 확인용 로그: ~/Library/Logs/PodMouse.log (1MB 넘으면 새로 시작)
+/// 문제 확인용 로그: ~/Library/Logs/AirpodMouse.log (1MB 넘으면 새로 시작)
 enum PLog {
     static let url = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Library/Logs/PodMouse.log")
-    private static let queue = DispatchQueue(label: "podmouse.log")
+        .appendingPathComponent("Library/Logs/AirpodMouse.log")
+    private static let queue = DispatchQueue(label: "airpodmouse.log")
     private static let formatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "HH:mm:ss.SSS"

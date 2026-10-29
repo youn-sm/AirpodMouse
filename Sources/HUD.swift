@@ -4,7 +4,6 @@ import SwiftUI
 final class HUDModel: ObservableObject {
     @Published var text = ""
     @Published var icon = "airpods"
-    @Published var listening = false
     @Published var visible = false
 }
 
@@ -14,7 +13,6 @@ final class HUD {
     private let model = HUDModel()
     private var panel: NSPanel?
     private var hideWork: DispatchWorkItem?
-    private var holding = false
 
     private func ensurePanel() -> NSPanel {
         if let panel { return panel }
@@ -40,34 +38,9 @@ final class HUD {
 
     /// 잠깐 보였다 사라지는 알림
     func flash(_ text: String, icon: String = "airpods", duration: TimeInterval = 1.2) {
-        guard Settings.shared.showHUD || model.listening else { return }
+        guard Settings.shared.showHUD else { return }
         show(text, icon: icon)
         scheduleHide(after: duration)
-    }
-
-    /// 음성 입력 중 계속 떠 있는 표시
-    func showListening(_ text: String) {
-        model.listening = true
-        show(text.isEmpty ? L("듣는 중…", "Listening…") : text, icon: "waveform")
-        hideWork?.cancel()
-    }
-
-    /// 키를 누르고 있는 동안 떠 있는 표시
-    func showHold(_ text: String, icon: String) {
-        guard !model.listening else { return }
-        holding = true
-        show(text, icon: icon)
-        hideWork?.cancel()
-    }
-
-    func endHold() {
-        holding = false
-        scheduleHide(after: 0.3)
-    }
-
-    func endListening() {
-        model.listening = false
-        scheduleHide(after: 1.0)
     }
 
     private func show(_ text: String, icon: String) {
@@ -82,7 +55,7 @@ final class HUD {
     private func scheduleHide(after t: TimeInterval) {
         hideWork?.cancel()
         let work = DispatchWorkItem { [weak self] in
-            guard let self, !self.model.listening, !self.holding else { return }
+            guard let self else { return }
             self.model.visible = false
             self.panel?.orderOut(nil)
         }
@@ -98,8 +71,7 @@ private struct HUDView: View {
         HStack(spacing: 10) {
             Image(systemName: model.icon)
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(model.listening ? Color.red : Color.white)
-                .symbolEffect(.pulse, isActive: model.listening)
+                .foregroundStyle(Color.white)
             Text(model.text)
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(.white)

@@ -1,16 +1,13 @@
 #!/bin/zsh
-# PodMouse 터미널 설치 스크립트
+# AirpodMouse 터미널 설치 스크립트
 # 사용법: ./install.sh              빌드해서 /Applications 에 설치하고 실행
 #         ./install.sh uninstall    앱 삭제
-# 저장소 밖에서 실행하면 ~/PodMouse (또는 $PODMOUSE_DIR) 에 받아서 설치해요.
 set -euo pipefail
 
-REPO_URL="https://github.com/tony1010-dev/PodMouse.git"
-
 if [[ "${1:-}" == "uninstall" ]]; then
-  pkill -x PodMouse 2>/dev/null || true
-  rm -rf /Applications/PodMouse.app
-  echo "PodMouse 삭제 완료"
+  pkill -x AirpodMouse 2>/dev/null || true
+  rm -rf /Applications/AirpodMouse.app
+  echo "AirpodMouse 삭제 완료"
   echo "손쉬운 사용 권한 목록에 남은 항목은 시스템 설정 → 개인정보 보호 및 보안 → 손쉬운 사용 에서 지워주세요."
   exit 0
 fi
@@ -18,7 +15,7 @@ fi
 # macOS 14 이상인지 확인
 major="$(sw_vers -productVersion | cut -d. -f1)"
 if (( major < 14 )); then
-  echo "PodMouse는 macOS 14 (Sonoma) 이상이 필요해요. 현재: $(sw_vers -productVersion)"
+  echo "AirpodMouse는 macOS 14 (Sonoma) 이상이 필요해요. 현재: $(sw_vers -productVersion)"
   exit 1
 fi
 
@@ -29,19 +26,7 @@ if ! xcrun --find swiftc >/dev/null 2>&1; then
   exit 1
 fi
 
-# 저장소 위치 찾기 (스크립트 옆에 Sources 가 없으면 받아오기)
-dir="${0:A:h}"
-if [[ ! -d "$dir/Sources" ]]; then
-  dir="${PODMOUSE_DIR:-$HOME/PodMouse}"
-  if [[ -d "$dir/.git" ]]; then
-    echo "업데이트: $dir"
-    git -C "$dir" pull --ff-only
-  else
-    echo "다운로드: $dir"
-    git clone "$REPO_URL" "$dir"
-  fi
-fi
-cd "$dir"
+cd "${0:A:h}"
 
 # 빌드 + 설치. 기본 SDK가 설치된 컴파일러와 버전이 안 맞으면 다른 SDK로 다시 시도
 log="$(mktemp)"

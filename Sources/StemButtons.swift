@@ -3,7 +3,7 @@ import MediaPlayer
 
 /// 에어팟 기둥 누르기(재생/다음/이전 신호)를 가로채기.
 /// macOS는 '지금 재생 중'인 앱에게만 이 신호를 보내므로, 무음 오디오를 틀어 그 자리를 차지함.
-/// 켜두면 음악 앱의 재생 버튼 대신 PodMouse 동작이 실행됨.
+/// 켜두면 음악 앱의 재생 버튼 대신 AirpodMouse 동작이 실행됨.
 final class StemButtons {
     var onPress: ((PodTrigger) -> Void)?
     private let engine = AVAudioEngine()
@@ -36,7 +36,7 @@ final class StemButtons {
             targets.append((cmd, t))
         }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = [
-            MPMediaItemPropertyTitle: "PodMouse",
+            MPMediaItemPropertyTitle: "AirpodMouse",
             MPMediaItemPropertyArtist: L("에어팟 마우스 모드", "AirPods Mouse Mode"),
             MPNowPlayingInfoPropertyPlaybackRate: 1.0,
         ]
@@ -65,7 +65,7 @@ final class StemButtons {
             player.scheduleBuffer(buffer, at: nil, options: .loops)
             player.play()
         } catch {
-            NSLog("PodMouse: silent audio failed \(error)")
+            NSLog("AirpodMouse: silent audio failed \(error)")
         }
     }
 }

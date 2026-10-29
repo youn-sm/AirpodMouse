@@ -1,14 +1,14 @@
 import Foundation
 import Combine
 
-/// 제스처/버튼에 연결할 수 있는 동작
+/// 기둥 버튼에 연결할 수 있는 동작
 enum PodAction: String, CaseIterable, Identifiable, Codable {
     case none
     case leftClick
     case rightClick
     case doubleClick
     case toggleDrag
-    case toggleVoice
+    case toggleDwell
     case toggleMouse
     case toggleScroll
     case recenter
@@ -24,7 +24,7 @@ enum PodAction: String, CaseIterable, Identifiable, Codable {
         case .rightClick: return L("오른쪽 클릭", "Right click")
         case .doubleClick: return L("더블 클릭", "Double click")
         case .toggleDrag: return L("드래그 시작/끝", "Start/end drag")
-        case .toggleVoice: return L("음성 입력 시작/끝", "Start/stop voice input")
+        case .toggleDwell: return L("머무르면 클릭 켜기/끄기", "Toggle dwell click")
         case .toggleMouse: return L("마우스 모드 켜기/끄기", "Toggle mouse mode")
         case .toggleScroll: return L("스크롤 모드 켜기/끄기", "Toggle scroll mode")
         case .recenter: return L("커서 화면 중앙으로", "Center cursor")
@@ -34,12 +34,8 @@ enum PodAction: String, CaseIterable, Identifiable, Codable {
     }
 }
 
-/// 머리 동작 / 기둥 버튼 종류
+/// 에어팟 기둥 누르기 종류
 enum PodTrigger: String, CaseIterable, Identifiable {
-    case nod          // 고개 까딱
-    case tiltRight    // 오른쪽으로 갸웃
-    case tiltLeft     // 왼쪽으로 갸웃
-    case shake        // 도리도리
     case stemSingle   // 기둥 1번 누르기
     case stemDouble   // 기둥 2번 누르기
     case stemTriple   // 기둥 3번 누르기
@@ -48,10 +44,6 @@ enum PodTrigger: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .nod: return L("고개 까딱 (끄덕)", "Nod")
-        case .tiltRight: return L("오른쪽으로 갸웃", "Tilt right")
-        case .tiltLeft: return L("왼쪽으로 갸웃", "Tilt left")
-        case .shake: return L("도리도리", "Head shake")
         case .stemSingle: return L("기둥 1번 누르기", "Stem press ×1")
         case .stemDouble: return L("기둥 2번 누르기", "Stem press ×2")
         case .stemTriple: return L("기둥 3번 누르기", "Stem press ×3")
@@ -60,20 +52,9 @@ enum PodTrigger: String, CaseIterable, Identifiable {
 
     var defaultAction: PodAction {
         switch self {
-        case .nod: return .none
-        case .tiltRight: return .none
-        case .tiltLeft: return .toggleVoice
-        case .shake: return .toggleMouse
         case .stemSingle: return .leftClick
         case .stemDouble: return .rightClick
-        case .stemTriple: return .toggleVoice
-        }
-    }
-
-    var isHeadGesture: Bool {
-        switch self {
-        case .nod, .tiltLeft, .tiltRight, .shake: return true
-        default: return false
+        case .stemTriple: return .toggleDwell
         }
     }
 }
@@ -84,41 +65,25 @@ final class Settings: ObservableObject {
     private let d = UserDefaults.standard
 
     // 커서
+    /// 천천히 움직일 때 커서 이득 (px/°)
     @Published var sensitivity: Double { didSet { d.set(sensitivity, forKey: "sensitivity") } }
+    /// 빠르게 움직일 때 추가 이득 (0 = 가속 없음)
     @Published var acceleration: Double { didSet { d.set(acceleration, forKey: "acceleration") } }
-    @Published var deadzone: Double { didSet { d.set(deadzone, forKey: "deadzone") } }
+    /// 떨림 거르기 0~1 (높을수록 강하게, 대신 살짝 느려짐)
     @Published var smoothing: Double { didSet { d.set(smoothing, forKey: "smoothing") } }
+    /// 이 속도(°/s)보다 느리면 커서 고정 (드리프트·떨림 흡수)
+    @Published var stillness: Double { didSet { d.set(stillness, forKey: "stillness") } }
     @Published var invertX: Bool { didSet { d.set(invertX, forKey: "invertX") } }
     @Published var invertY: Bool { didSet { d.set(invertY, forKey: "invertY") } }
     @Published var scrollSpeed: Double { didSet { d.set(scrollSpeed, forKey: "scrollSpeed") } }
-    /// 절대 모드: 고개 방향 = 화면 위치 (정면 = 중앙). 상대 모드: 움직인 만큼 이동 (트랙패드처럼)
-    /// joystick: 기준에서 살짝 기울이면 그쪽으로 계속 이동 / absolute: 고개 방향 = 화면 위치 / relative: 움직인 만큼
-    @Published var cursorMode: String { didSet { d.set(cursorMode, forKey: "cursorMode") } }
-    var absoluteMode: Bool { cursorMode == "absolute" }
-    var joystickMode: Bool { cursorMode == "joystick" }
-    /// 조이스틱: ⌃⌥/ 를 누르고 있을 때만 이동 (떼면 커서 고정)
-    @Published var joyRequiresKey: Bool { didSet { d.set(joyRequiresKey, forKey: "joyRequiresKey") } }
-    @Published var joyMaxSpeed: Double { didSet { d.set(joyMaxSpeed, forKey: "joyMaxSpeed") } }
-    @Published var joyDeadzone: Double { didSet { d.set(joyDeadzone, forKey: "joyDeadzone") } }
-    @Published var joyRange: Double { didSet { d.set(joyRange, forKey: "joyRange") } }
-    @Published var verticalBoost: Double { didSet { d.set(verticalBoost, forKey: "verticalBoost") } }
-    @Published var yawRange: Double { didSet { d.set(yawRange, forKey: "yawRange") } }
-    @Published var pitchRange: Double { didSet { d.set(pitchRange, forKey: "pitchRange") } }
 
-    // 제스처
-    @Published var gesturesEnabled: Bool { didSet { d.set(gesturesEnabled, forKey: "gesturesEnabled") } }
-    @Published var nodThreshold: Double { didSet { d.set(nodThreshold, forKey: "nodThreshold") } }
-    @Published var tiltAngle: Double { didSet { d.set(tiltAngle, forKey: "tiltAngle") } }
-    @Published var shakeThreshold: Double { didSet { d.set(shakeThreshold, forKey: "shakeThreshold") } }
-    @Published var invertTilt: Bool { didSet { d.set(invertTilt, forKey: "invertTilt") } }
-    @Published var actions: [String: String] { didSet { d.set(actions, forKey: "actions") } }
-
-    // 음성
-    @Published var voiceLocale: String { didSet { d.set(voiceLocale, forKey: "voiceLocale") } }
-    @Published var autoEnter: Bool { didSet { d.set(autoEnter, forKey: "autoEnter") } }
-    @Published var voiceTargetBundleID: String { didSet { d.set(voiceTargetBundleID, forKey: "voiceTargetBundleID") } }
+    // 머무르면 클릭
+    @Published var dwellEnabled: Bool { didSet { d.set(dwellEnabled, forKey: "dwellEnabled") } }
+    @Published var dwellTime: Double { didSet { d.set(dwellTime, forKey: "dwellTime") } }
+    @Published var dwellRadius: Double { didSet { d.set(dwellRadius, forKey: "dwellRadius") } }
 
     // 기둥 버튼
+    @Published var actions: [String: String] { didSet { d.set(actions, forKey: "actions") } }
     @Published var captureStem: Bool { didSet { d.set(captureStem, forKey: "captureStem") } }
 
     // 기타
@@ -129,70 +94,56 @@ final class Settings: ObservableObject {
     @Published var showHUD: Bool { didSet { d.set(showHUD, forKey: "showHUD") } }
     @Published var showGuideOnLaunch: Bool { didSet { d.set(showGuideOnLaunch, forKey: "showGuideOnLaunch") } }
 
+    /// '기본값으로' 버튼이 되돌리는 항목
+    private static let tunableDefaults: [String: Any] = [
+        "sensitivity": 14.0,
+        "acceleration": 2.5,
+        "smoothing": 0.6,
+        "stillness": 4.0,
+        "invertX": false,
+        "invertY": false,
+        "scrollSpeed": 6.0,
+        "dwellTime": 0.7,
+        "dwellRadius": 10.0,
+        "actions": [String: String](),
+    ]
+
     private init() {
-        d.register(defaults: [
-            "sensitivity": 22.0,
-            "acceleration": 1.2,
-            "deadzone": 3.0,
-            "smoothing": 0.35,
-            "invertX": false,
-            "invertY": false,
-            "scrollSpeed": 6.0,
-            "cursorMode": "joystick",
-            "joyRequiresKey": false,
-            "joyMaxSpeed": 1400.0,
-            "joyDeadzone": 4.0,
-            "joyRange": 12.0,
-            "verticalBoost": 1.6,
-            "yawRange": 22.0,
-            "pitchRange": 12.0,
-            "gesturesEnabled": false,
-            "nodThreshold": 110.0,
-            "tiltAngle": 18.0,
-            "shakeThreshold": 140.0,
-            "invertTilt": false,
-            "voiceLocale": Settings.systemIsKorean ? "ko-KR" : "en-US",
-            "autoEnter": false,
-            "voiceTargetBundleID": "",
+        d.register(defaults: Self.tunableDefaults.merging([
+            "dwellEnabled": false,
             "captureStem": true,
             "showHUD": true,
             "showGuideOnLaunch": true,
             "language": "system",
-        ])
+        ]) { a, _ in a })
+        sensitivity = 0; acceleration = 0; smoothing = 0; stillness = 0
+        invertX = false; invertY = false; scrollSpeed = 0
+        dwellEnabled = false; dwellTime = 0; dwellRadius = 0
+        actions = [:]; captureStem = false
+        language = "system"; showHUD = false; showGuideOnLaunch = false
+        load()
+    }
+
+    private func load() {
         sensitivity = d.double(forKey: "sensitivity")
         acceleration = d.double(forKey: "acceleration")
-        deadzone = d.double(forKey: "deadzone")
         smoothing = d.double(forKey: "smoothing")
+        stillness = d.double(forKey: "stillness")
         invertX = d.bool(forKey: "invertX")
         invertY = d.bool(forKey: "invertY")
         scrollSpeed = d.double(forKey: "scrollSpeed")
-        cursorMode = d.string(forKey: "cursorMode") ?? "joystick"
-        joyRequiresKey = d.bool(forKey: "joyRequiresKey")
-        joyMaxSpeed = d.double(forKey: "joyMaxSpeed")
-        joyDeadzone = d.double(forKey: "joyDeadzone")
-        joyRange = d.double(forKey: "joyRange")
-        verticalBoost = d.double(forKey: "verticalBoost")
-        yawRange = d.double(forKey: "yawRange")
-        pitchRange = d.double(forKey: "pitchRange")
-        gesturesEnabled = d.bool(forKey: "gesturesEnabled")
-        nodThreshold = d.double(forKey: "nodThreshold")
-        tiltAngle = d.double(forKey: "tiltAngle")
-        shakeThreshold = d.double(forKey: "shakeThreshold")
-        invertTilt = d.bool(forKey: "invertTilt")
+        dwellEnabled = d.bool(forKey: "dwellEnabled")
+        dwellTime = d.double(forKey: "dwellTime")
+        dwellRadius = d.double(forKey: "dwellRadius")
         actions = (d.dictionary(forKey: "actions") as? [String: String]) ?? [:]
-        voiceLocale = d.string(forKey: "voiceLocale") ?? (Settings.systemIsKorean ? "ko-KR" : "en-US")
-        autoEnter = d.bool(forKey: "autoEnter")
-        voiceTargetBundleID = d.string(forKey: "voiceTargetBundleID") ?? ""
         captureStem = d.bool(forKey: "captureStem")
+        language = d.string(forKey: "language") ?? "system"
         showHUD = d.bool(forKey: "showHUD")
         showGuideOnLaunch = d.bool(forKey: "showGuideOnLaunch")
-        language = d.string(forKey: "language") ?? "system"
     }
 
-    /// 앱 언어를 바꾸면 음성 인식 언어도 한국어/영어에 맞춰 같이 바꿈 (다른 언어를 골라 둔 경우는 그대로)
     func setLanguage(_ lang: String) {
         language = lang
-        if voiceLocale == "ko-KR" || voiceLocale == "en-US" { voiceLocale = isKorean ? "ko-KR" : "en-US" }
     }
 
     func action(for trigger: PodTrigger) -> PodAction {
@@ -205,31 +156,7 @@ final class Settings: ObservableObject {
     }
 
     func resetToDefaults() {
-        for key in ["sensitivity", "acceleration", "deadzone", "smoothing", "invertX", "invertY",
-                    "scrollSpeed", "cursorMode", "joyRequiresKey", "joyMaxSpeed", "joyDeadzone", "joyRange", "verticalBoost", "yawRange", "pitchRange", "gesturesEnabled", "nodThreshold", "tiltAngle", "shakeThreshold",
-                    "invertTilt", "actions"] {
-            d.removeObject(forKey: key)
-        }
-        sensitivity = d.double(forKey: "sensitivity")
-        acceleration = d.double(forKey: "acceleration")
-        deadzone = d.double(forKey: "deadzone")
-        smoothing = d.double(forKey: "smoothing")
-        invertX = d.bool(forKey: "invertX")
-        invertY = d.bool(forKey: "invertY")
-        scrollSpeed = d.double(forKey: "scrollSpeed")
-        cursorMode = d.string(forKey: "cursorMode") ?? "joystick"
-        joyRequiresKey = d.bool(forKey: "joyRequiresKey")
-        joyMaxSpeed = d.double(forKey: "joyMaxSpeed")
-        joyDeadzone = d.double(forKey: "joyDeadzone")
-        joyRange = d.double(forKey: "joyRange")
-        verticalBoost = d.double(forKey: "verticalBoost")
-        yawRange = d.double(forKey: "yawRange")
-        pitchRange = d.double(forKey: "pitchRange")
-        gesturesEnabled = d.bool(forKey: "gesturesEnabled")
-        nodThreshold = d.double(forKey: "nodThreshold")
-        tiltAngle = d.double(forKey: "tiltAngle")
-        shakeThreshold = d.double(forKey: "shakeThreshold")
-        invertTilt = d.bool(forKey: "invertTilt")
-        actions = [:]
+        for key in Self.tunableDefaults.keys { d.removeObject(forKey: key) }
+        load()
     }
 }

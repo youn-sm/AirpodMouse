@@ -40,55 +40,6 @@ enum InputSynth {
         postMouse(type, at: p, button: heldButton ?? .left)
     }
 
-    /// 진단: 이동 방식별로 실제 커서가 움직이는지 기록 (--selftest 로 실행했을 때만)
-    static func selfTest() {
-        func probe(_ name: String, _ post: (CGPoint) -> Void) {
-            let start = cursor
-            let target = CGPoint(x: start.x + 40, y: start.y)
-            post(target)
-            usleep(150_000)
-            let after = cursor
-            PLog.write(String(format: "selftest %@: start=(%.0f,%.0f) target=(%.0f,%.0f) after=(%.0f,%.0f) moved=%@",
-                              name, start.x, start.y, target.x, target.y, after.x, after.y,
-                              abs(after.x - target.x) < 2 ? "YES" : "NO"))
-            CGWarpMouseCursorPosition(start)
-            usleep(150_000)
-        }
-        probe("privateSource") { p in
-            CGEvent(mouseEventSource: source, mouseType: .mouseMoved, mouseCursorPosition: p, mouseButton: .left)?.post(tap: .cghidEventTap)
-        }
-        probe("privateSource+flags+tag") { p in postMouse(.mouseMoved, at: p, button: .left) }
-        probe("nilSource") { p in
-            CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: p, mouseButton: .left)?.post(tap: .cghidEventTap)
-        }
-        probe("hidSource") { p in
-            CGEvent(mouseEventSource: CGEventSource(stateID: .hidSystemState), mouseType: .mouseMoved, mouseCursorPosition: p, mouseButton: .left)?.post(tap: .cghidEventTap)
-        }
-        probe("warp") { p in CGWarpMouseCursorPosition(p) }
-
-        // ⌃⌥ 를 누르고 있는 상태에서 다시
-        let hid = CGEventSource(stateID: .hidSystemState)
-        for (code, flag) in [(CGKeyCode(59), CGEventFlags.maskControl), (CGKeyCode(58), CGEventFlags.maskAlternate)] {
-            let e = CGEvent(keyboardEventSource: hid, virtualKey: code, keyDown: true)
-            e?.type = .flagsChanged
-            e?.flags = flag.union(code == 58 ? .maskControl : [])
-            e?.post(tap: .cghidEventTap)
-        }
-        usleep(100_000)
-        PLog.write("selftest modifiers now=\(CGEventSource.flagsState(.combinedSessionState).rawValue)")
-        probe("withMods privateSource+flags+tag") { p in postMouse(.mouseMoved, at: p, button: .left) }
-        probe("withMods nilSource") { p in
-            CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: p, mouseButton: .left)?.post(tap: .cghidEventTap)
-        }
-        probe("withMods warp") { p in CGWarpMouseCursorPosition(p) }
-        for code in [CGKeyCode(58), CGKeyCode(59)] {
-            let e = CGEvent(keyboardEventSource: hid, virtualKey: code, keyDown: false)
-            e?.type = .flagsChanged
-            e?.flags = []
-            e?.post(tap: .cghidEventTap)
-        }
-    }
-
     /// 화면 밖으로 나가지 않게 가장 가까운 디스플레이 안으로 고정
     static func clampToScreens(_ p: CGPoint) -> CGPoint {
         var count: UInt32 = 0
@@ -188,27 +139,4 @@ enum InputSynth {
 
     static func pressEnter() { key(36) }
     static func pressEscape() { key(53) }
-
-    /// 클립보드를 잠깐 빌려서 붙여넣기 (한글도 안정적으로 들어감). 원래 클립보드는 복구.
-    static func paste(_ text: String, completion: (() -> Void)? = nil) {
-        let pb = NSPasteboard.general
-        let saved: [[NSPasteboard.PasteboardType: Data]] = (pb.pasteboardItems ?? []).map { item in
-            var dict: [NSPasteboard.PasteboardType: Data] = [:]
-            for t in item.types { if let data = item.data(forType: t) { dict[t] = data } }
-            return dict
-        }
-        pb.clearContents()
-        pb.setString(text, forType: .string)
-        key(9, flags: .maskCommand) // ⌘V
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            pb.clearContents()
-            let items = saved.map { dict -> NSPasteboardItem in
-                let item = NSPasteboardItem()
-                for (t, data) in dict { item.setData(data, forType: t) }
-                return item
-            }
-            if !items.isEmpty { pb.writeObjects(items) }
-            completion?()
-        }
-    }
 }
