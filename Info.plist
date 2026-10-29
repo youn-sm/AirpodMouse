@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleLocalizations</key><array><string>en</string><string>ko</string></array>
+    <key>CFBundleName</key><string>PodMouse</string>
+    <key>CFBundleDisplayName</key><string>PodMouse</string>
+    <key>CFBundleIdentifier</key><string>com.iungjang.podmouse</string>
+    <key>CFBundleExecutable</key><string>PodMouse</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>1.0</string>
+    <key>CFBundleVersion</key><string>1</string>
+    <key>LSMinimumSystemVersion</key><string>14.0</string>
+    <key>LSUIElement</key><true/>
+    <key>NSHighResolutionCapable</key><true/>
+    <key>NSMotionUsageDescription</key><string>에어팟의 머리 움직임으로 마우스 커서를 움직이고 제스처를 인식합니다.</string>
+    <key>NSMicrophoneUsageDescription</key><string>음성 입력으로 Claude Code·Codex 등에 말로 코딩하기 위해 마이크를 사용합니다.</string>
+    <key>NSSpeechRecognitionUsageDescription</key><string>말한 내용을 텍스트로 바꿔 입력합니다.</string>
+</dict>
+</plist>
